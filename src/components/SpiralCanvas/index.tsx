@@ -141,7 +141,7 @@ export default function SpiralCanvas({ onNodesReady }: Props) {
         let nodesReady = false
 
         function computeAndSendNodes() {
-            const sc = Math.min(canvas.width, canvas.height) * 1.4
+            const sc = Math.min(canvas.width, canvas.height) * 1.2
             const cx = canvas.width / 2
             const cy = canvas.height / 2
 
@@ -188,7 +188,7 @@ export default function SpiralCanvas({ onNodesReady }: Props) {
             const maxThick = 12
             const voidAmt = 0.35
             const organicK = 0.6
-            const sc = Math.min(canvas.width, canvas.height) * 1.4
+            const sc = Math.min(canvas.width, canvas.height) * 1.2
             const cx = canvas.width / 2
             const cy = canvas.height / 2
 
