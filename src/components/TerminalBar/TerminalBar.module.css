@@ -1,0 +1,56 @@
+.bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 24px;
+    font-family: monospace;
+    font-size: 13px;
+    background: rgba(55, 55, 55, 0.75);
+    backdrop-filter: blur(6px);
+    border-top: 1px solid rgba(195, 49, 73, 0.2);
+    z-index: 100;
+}
+
+.prompt {
+    color: rgba(205, 198, 165, 0.5);
+}
+
+.name    { color: #c33149; }
+
+.divider {
+    color: rgba(205, 198, 165, 0.3);
+    margin: 0 2px;
+}
+
+.link {
+    color: rgba(205, 198, 165, 0.7);
+    text-decoration: none;
+    letter-spacing: 0.05em;
+    transition: color 0.2s ease;
+}
+
+.link:hover {
+    color: #d1d2f9;
+    text-shadow: 0 0 8px rgba(209, 210, 249, 0.5);
+}
+
+.sep {
+    color: rgba(205, 198, 165, 0.2);
+    margin: 0 4px;
+}
+
+.cursor {
+    color: #c33149;
+    animation: blink 1.1s step-end infinite;
+    margin-left: 2px;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0; }
+}
