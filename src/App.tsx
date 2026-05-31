@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import SpiralCanvas from './components/SpiralCanvas'
 import SocialNodes from './components/SocialNodes'
 import TerminalBar from './components/TerminalBar'
