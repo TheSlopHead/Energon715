@@ -50,8 +50,8 @@ export default function Contact() {
                 </div>
 
                 <div className={styles.links}>
-                    <a href="mailto:energon715@proton.me" className={styles.link}>
-                        energon715@proton.me
+                    <a href="mailto:TheSlopHead@outlook.com" className={styles.link}>
+                        TheSlopHead@outlook.com
                     </a>
                     <a href="https://github.com/energon715" target="_blank" rel="noopener noreferrer" className={styles.link}>
                         github.com/energon715
