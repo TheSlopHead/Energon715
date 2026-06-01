@@ -4,12 +4,11 @@ import { links } from '../../data/links'
 interface Props {
     onNodesReady: (nodes: { id: string; x: number; y: number }[]) => void
     scrollProgress: number
+    isMobile: boolean
 }
 
-// Два рукава галактики = два набора точек со сдвигом π
 const ARMS = 2
 const TURNS = 3.2
-const POINTS_PER_ARM = 320
 
 function noise1(x: number, seed: number): number {
     return (
@@ -32,23 +31,19 @@ interface Profile {
     thick: number; voids: VoidZone[]; seed: number
 }
 
-// Генерируем точки одного рукава галактики
-function buildGalaxyArm(armIdx: number): Point[] {
+function buildGalaxyArm(armIdx: number, pointsPerArm: number): Point[] {
     const pts: Point[] = []
     const armOffset = (armIdx / ARMS) * Math.PI * 2
 
-    for (let i = 0; i < POINTS_PER_ARM; i++) {
-        const frac = i / (POINTS_PER_ARM - 1)
+    for (let i = 0; i < pointsPerArm; i++) {
+        const frac = i / (pointsPerArm - 1)
         const theta = frac * Math.PI * 2 * TURNS + armOffset
-
-        // логарифмическая спираль с небольшим рассеиванием
         const r = frac * 0.48
         const scatter = noise1(frac * 4, armIdx * 3.7) * 0.04 * frac
 
         const x = r * Math.cos(theta) + scatter
         const y = r * Math.sin(theta) + scatter * 0.7
 
-        // нормаль — перпендикуляр к направлению
         const theta2 = (frac + 0.004) * Math.PI * 2 * TURNS + armOffset
         const r2 = (frac + 0.004) * 0.48
         const x2 = r2 * Math.cos(theta2)
@@ -84,7 +79,6 @@ function makeProfile(armIdx: number, count: number): Profile[] {
             thick += pk.height * Math.exp(-d * d * 3)
         }
         thick += noise1(frac * 8, seed) * 0.2
-        // к центру толще, к краям тоньше
         thick *= (1 - frac * 0.4)
         return { thick: Math.max(0.05, Math.min(1, thick)), voids, seed }
     })
@@ -109,7 +103,7 @@ function waveColor(_frac: number, _pi: number, layerT: number, t: number, flowBr
     return `hsl(${h | 0},${s | 0}%,${Math.min(95, l) | 0}%)`
 }
 
-export default function SpiralCanvas({ onNodesReady, scrollProgress }: Props) {
+export default function SpiralCanvas({ onNodesReady, scrollProgress, isMobile }: Props) {
     const canvasRef = useRef<HTMLCanvasElement>(null)
     const scrollRef = useRef(0)
 
@@ -123,32 +117,43 @@ export default function SpiralCanvas({ onNodesReady, scrollProgress }: Props) {
         const ctx = canvas.getContext('2d')
         if (!ctx) return
 
-        // offscreen canvas для свечения
-        const glow = document.createElement('canvas')
-        const glowCtx = glow.getContext('2d')!
+        // Параметры для мобильных
+        const POINTS_PER_ARM = isMobile ? 80 : 320
+        const MAX_THICK = isMobile ? 6 : 12
+        const VOID_AMT = isMobile ? 0.5 : 0.35
+        const ORGANIC_K = isMobile ? 0.3 : 0.6
+        const USE_GLOW = !isMobile
+        const USE_GLITCH = !isMobile
 
-        // генерируем рукава один раз
-        const pointSets: Point[][] = Array.from({ length: ARMS }, (_, i) => buildGalaxyArm(i))
+        // offscreen canvas для свечения (если нужно)
+        let glow: HTMLCanvasElement | null = null
+        let glowCtx: CanvasRenderingContext2D | null = null
+        if (USE_GLOW) {
+            glow = document.createElement('canvas')
+            glowCtx = glow.getContext('2d')!
+        }
+
+        // Генерируем рукава один раз
+        const pointSets: Point[][] = Array.from({ length: ARMS }, (_, i) => buildGalaxyArm(i, POINTS_PER_ARM))
         const profiles: Profile[][] = Array.from({ length: ARMS }, (_, i) => makeProfile(i, POINTS_PER_ARM))
 
         function resize() {
             canvas.width = window.innerWidth
             canvas.height = window.innerHeight
-            glow.width = canvas.width
-            glow.height = canvas.height
+            if (glow) {
+                glow.width = canvas.width
+                glow.height = canvas.height
+            }
             computeAndSendNodes()
         }
 
-        // координаты в пространстве [-0.5, 0.5] → экран
         function toScreen(x: number, y: number, sc: number, cx: number, cy: number) {
             return { sx: cx + x * sc, sy: cy + y * sc }
         }
 
-        // Обновление позиций кнопок с учётом текущего скролла
         function computeAndSendNodes() {
             const sp = scrollRef.current
             const scaleBoost = 1 + sp * 2.2
-            // Такой же масштаб, как в отрисовке спирали
             const sc = Math.min(canvas.width, canvas.height) * 1.4 * scaleBoost
             const cx = canvas.width / 2
             const cy = canvas.height / 2
@@ -172,9 +177,10 @@ export default function SpiralCanvas({ onNodesReady, scrollProgress }: Props) {
         let glitchActive = false
         let glitchBlocks: { x: number; y: number; w: number; h: number; dx: number; col: string }[] = []
         let rafId: number
-        let lastSp: number | null = null // Для отслеживания изменения скролла
+        let lastSp: number | null = null
 
         function triggerGlitch() {
+            if (!USE_GLITCH) return
             glitchActive = true
             glitchBlocks = Array.from({ length: 8 + Math.floor(Math.random() * 10) }, () => ({
                 x: Math.random() * canvas.width,
@@ -190,33 +196,31 @@ export default function SpiralCanvas({ onNodesReady, scrollProgress }: Props) {
         function frame() {
             t += 0.001
             const sp = scrollRef.current
-            if (Math.random() < 0.01) {
-                console.log(scrollRef.current)
-            }
-            // Первый запуск или значительное изменение скролла → обновляем позиции кнопок
-            if (lastSp === null || Math.abs(sp - lastSp) > 0.001) {
+
+            // На мобильных обновляем узлы реже (каждые ~100 мс)
+            if (!isMobile && (lastSp === null || Math.abs(sp - lastSp) > 0.001)) {
+                computeAndSendNodes()
+                lastSp = sp
+            } else if (isMobile && (lastSp === null || Math.abs(sp - lastSp) > 0.05)) {
+                computeAndSendNodes()
+                lastSp = sp
+            } else if (lastSp === null) {
                 computeAndSendNodes()
                 lastSp = sp
             }
 
-            const maxThick = 12
-            const voidAmt = 0.35
-            const organicK = 0.6
             const scaleBoost = 1 + sp * 2.2
             const sc = Math.min(canvas.width, canvas.height) * 1.4 * scaleBoost
             const cx = canvas.width / 2
             const cy = canvas.height / 2
 
-            // Мягкое затухание: при sp=1 остаётся 20% видимости
             const globalAlphaScale = 0.2 + (1 - sp) * 0.8
             const fadeScale = 1 - sp * 0.6
+
             ctx.fillStyle = '#060608'
             ctx.fillRect(0, 0, canvas.width, canvas.height)
-            glowCtx.clearRect(0, 0, glow.width, glow.height)
 
-            // Если почти ничего не видно, всё равно продолжаем анимацию (можно закомментировать,
-            // чтобы не нагружать процессор, но для плавности оставим)
-            // if (globalAlphaScale <= 0.02) { rafId = requestAnimationFrame(frame); return; }
+            if (glowCtx) glowCtx.clearRect(0, 0, glow!.width, glow!.height)
 
             pointSets.forEach((pts, pi) => {
                 const prof = profiles[pi]
@@ -230,10 +234,10 @@ export default function SpiralCanvas({ onNodesReady, scrollProgress }: Props) {
                     const flowBright = Math.max(0, Math.sin(flowPhase)) *
                         Math.pow(Math.max(0, Math.sin(flowPhase)), 2)
 
-                    const organicNoise = noise1(frac * 6 + t * 0.15, seed + pi) * organicK
+                    const organicNoise = noise1(frac * 6 + t * 0.15, seed + pi) * ORGANIC_K
                     const baseThick = 0.35 + thick * 0.65
                     const pulseThick = 1 + branchPulse * 0.35
-                    const localThick = Math.max(3, Math.round((baseThick + organicNoise * 0.2) * maxThick * pulseThick))
+                    const localThick = Math.max(3, Math.round((baseThick + organicNoise * 0.2) * MAX_THICK * pulseThick))
                     const spread = localThick * (1 + frac * 2) * sc * 0.002
 
                     const isFlowHead = flowBright > 0.6
@@ -254,80 +258,77 @@ export default function SpiralCanvas({ onNodesReady, scrollProgress }: Props) {
                             }
                         }
 
-                        if (inVoid && Math.random() < voidAmt) continue
-                        if (!inVoid && Math.random() < voidAmt * 0.12) continue
+                        if (inVoid && Math.random() < VOID_AMT) continue
+                        if (!inVoid && Math.random() < VOID_AMT * 0.12) continue
 
                         const edgeDist = Math.abs(layerT - 0.5) * 2
                         const fill = (1 - edgeDist * edgeDist) * (0.5 + thick * 0.5)
                         const ch = charByFill(fill)
                         if (ch === ' ') continue
 
-                        const micro = noise1(frac * 10 + layer, seed) * organicK * sc * 0.001
+                        const micro = noise1(frac * 10 + layer, seed) * ORGANIC_K * sc * 0.001
                         const { sx, sy } = toScreen(
                             pt.x + pt.nx * offset * 0.001,
                             pt.y + pt.ny * offset * 0.001,
                             sc, cx, cy
                         )
 
-                        const fsz =
-                            (4 + frac * 2 + thick * 0.6) *
-                            sc *
-                            0.003 *
-                            fadeScale
+                        const fsz = (4 + frac * 2 + thick * 0.6) * sc * 0.003 * fadeScale
 
                         ctx.globalAlpha = (0.25 + fill * 0.75) * globalAlphaScale
                         ctx.fillStyle = waveColor(frac, pi, 1 - edgeDist, t, flowBright)
                         ctx.font = `${fsz.toFixed(1)}px monospace`
                         ctx.fillText(ch, sx + micro, sy + micro)
 
-                        if (isFlowHead && layer === Math.floor(localThick / 2)) {
-                            glowCtx.globalAlpha =
-                                flowBright *
-                                0.9 *
-                                globalAlphaScale *
-                                (1 - sp)
-                            glowCtx.fillStyle = waveColor(frac, pi, 1, t, flowBright)
-                            glowCtx.font = `${(fsz * 1.4).toFixed(1)}px monospace`
-                            glowCtx.fillText(ch, sx, sy)
+                        if (USE_GLOW && isFlowHead && layer === Math.floor(localThick / 2)) {
+                            glowCtx!.globalAlpha = flowBright * 0.9 * globalAlphaScale * (1 - sp)
+                            glowCtx!.fillStyle = waveColor(frac, pi, 1, t, flowBright)
+                            glowCtx!.font = `${(fsz * 1.4).toFixed(1)}px monospace`
+                            glowCtx!.fillText(ch, sx, sy)
                         }
                     }
                 })
             })
 
-            // свечение одним проходом
-            ctx.save()
-            ctx.filter = 'blur(8px)'
-            ctx.globalAlpha = 0.55
-            ctx.globalCompositeOperation = 'screen'
-            ctx.drawImage(glow, 0, 0)
-            ctx.restore()
-            ctx.globalCompositeOperation = 'source-over'
-
-            glitchTimer += 0.009
-            if (glitchTimer > 0.8 + Math.random() * 2) {
-                glitchTimer = 0
-                triggerGlitch()
+            // свечение
+            if (USE_GLOW) {
+                ctx.save()
+                ctx.filter = 'blur(8px)'
+                ctx.globalAlpha = 0.55
+                ctx.globalCompositeOperation = 'screen'
+                ctx.drawImage(glow!, 0, 0)
+                ctx.restore()
+                ctx.globalCompositeOperation = 'source-over'
             }
-            if (glitchActive) {
-                glitchBlocks.forEach(b => {
-                    try {
-                        const src = ctx.getImageData(b.x | 0, b.y | 0, b.w | 0, b.h | 0)
-                        const dst = new ImageData(new Uint8ClampedArray(src.data), src.width, src.height)
-                        for (let p = 0; p < dst.data.length; p += 4) {
-                            const shift = Math.floor(b.dx * 0.4)
-                            const srcIdx = Math.max(0, p - shift * 4)
-                            dst.data[p] = src.data[Math.min(srcIdx, src.data.length - 4)]
-                            dst.data[p + 1] = src.data[p + 1]
-                            dst.data[p + 2] = src.data[Math.min(p + shift * 4, src.data.length - 2)]
-                            dst.data[p + 3] = src.data[p + 3]
-                        }
-                        ctx.putImageData(dst, (b.x + b.dx * 0.3) | 0, b.y | 0)
-                        ctx.globalAlpha = 0.25
-                        ctx.strokeStyle = b.col
-                        ctx.lineWidth = 1
-                        ctx.strokeRect((b.x + b.dx * 0.3) | 0, b.y | 0, b.w | 0, b.h | 0)
-                    } catch { }
-                })
+
+            // глитч
+            if (USE_GLITCH) {
+                glitchTimer += 0.009
+                if (glitchTimer > 0.8 + Math.random() * 2) {
+                    glitchTimer = 0
+                    triggerGlitch()
+                }
+                if (glitchActive) {
+                    glitchBlocks.forEach(b => {
+                        try {
+                            const src = ctx.getImageData(b.x | 0, b.y | 0, b.w | 0, b.h | 0)
+                            const dst = new ImageData(new Uint8ClampedArray(src.data), src.width, src.height)
+                            for (let p = 0; p < dst.data.length; p += 4) {
+                                const shift = Math.floor(b.dx * 0.4)
+                                const srcIdx = Math.max(0, p - shift * 4)
+                                dst.data[p] = src.data[Math.min(srcIdx, src.data.length - 4)]
+                                dst.data[p + 1] = src.data[p + 1]
+                                dst.data[p + 2] = src.data[Math.min(p + shift * 4, src.data.length - 2)]
+                                dst.data[p + 3] = src.data[p + 3]
+                            }
+                            ctx.putImageData(dst, (b.x + b.dx * 0.3) | 0, b.y | 0)
+                            ctx.globalAlpha = 0.25
+                            ctx.strokeStyle = b.col
+                            ctx.lineWidth = 1
+                            ctx.strokeRect((b.x + b.dx * 0.3) | 0, b.y | 0, b.w | 0, b.h | 0)
+                        } catch { }
+                    })
+                }
             }
 
             ctx.globalAlpha = 1
@@ -340,7 +341,7 @@ export default function SpiralCanvas({ onNodesReady, scrollProgress }: Props) {
             cancelAnimationFrame(rafId)
             window.removeEventListener('resize', resize)
         }
-    }, [])
+    }, [isMobile])
 
     return (
         <canvas
