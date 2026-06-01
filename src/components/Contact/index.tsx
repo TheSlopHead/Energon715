@@ -53,8 +53,8 @@ export default function Contact() {
                     <a href="mailto:TheSlopHead@outlook.com" className={styles.link}>
                         TheSlopHead@outlook.com
                     </a>
-                    <a href="https://github.com/energon715" target="_blank" rel="noopener noreferrer" className={styles.link}>
-                        github.com/energon715
+                    <a href="https://github.com/TheSlopHead" target="_blank" rel="noopener noreferrer" className={styles.link}>
+                        https://github.com/TheSlopHead
                     </a>
                 </div>
             </div>
