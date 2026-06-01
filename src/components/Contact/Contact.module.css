@@ -1,0 +1,155 @@
+.contact {
+    position: relative;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+.overlay {
+    position: absolute;
+    inset: 0;
+    background:
+            radial-gradient(
+                    circle at center,
+                    rgba(0, 0, 0, 0.05),
+                    rgba(0, 0, 0, 0.55)
+            );
+    pointer-events: none;
+}
+
+.content {
+    text-align: center;
+    z-index: 2;
+}
+
+.title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 28px;
+    letter-spacing: 4px;
+    color: #ffffff;
+    text-shadow:
+            0 0 15px rgba(209, 210, 249, 0.8),
+            0 0 35px rgba(195, 49, 73, 0.5),
+            0 0 60px rgba(209, 210, 249, 0.3);
+    margin-bottom: 12px;
+    animation: pulse 3s ease-in-out infinite;
+}
+
+.subtitle {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    color: #cdc6a5;
+    text-shadow: 0 0 10px rgba(209, 210, 249, 0.4);
+    margin-bottom: 48px;
+    letter-spacing: 2px;
+}
+
+.emailRow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    margin-bottom: 40px;
+    height: 60px;
+}
+
+.envelope {
+    font-size: 34px;
+    color: #d1d2f9;
+    filter: drop-shadow(0 0 10px rgba(209, 210, 249, 0.7));
+    z-index: 2;
+    margin-left: 8px;
+}
+
+/* Траектория */
+.flightPath {
+    position: relative;
+    width: 220px;
+    height: 2px;
+    display: flex;
+    align-items: center;
+}
+
+/* Пунктирная линия — теперь всегда видна (без скрытия) */
+.dashedLine {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 100%;
+    height: 0;
+    border-top: 2px dashed rgba(205, 198, 165, 0.5);
+    transform: translateY(-50%);
+}
+
+/* Самолётик — начальные координаты и анимация */
+.plane {
+    position: absolute;
+    left: -20px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 3;
+    opacity: 0;
+    animation: flyToEnvelope 2.5s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+}
+
+/* Иконка самолётика */
+.planeIcon {
+    width: 28px;
+    height: 28px;
+    color: #f05d5e;
+    filter: drop-shadow(0 0 8px rgba(240, 93, 94, 0.8));
+    transform: rotate(-15deg);
+}
+
+@keyframes flyToEnvelope {
+    0% {
+        left: -20px;
+        opacity: 0;
+        transform: translateY(-50%) rotate(-8deg);
+    }
+    10% {
+        opacity: 1;
+    }
+    90% {
+        opacity: 1;
+        transform: translateY(-50%) rotate(2deg);
+    }
+    100% {
+        left: calc(100% + 5px);
+        opacity: 0;
+        transform: translateY(-50%) rotate(0deg);
+    }
+}
+
+.links {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.link {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: #d1d2f9;
+    text-shadow: 0 0 8px rgba(209, 210, 249, 0.4);
+    text-decoration: none;
+    transition: color 0.2s, text-shadow 0.2s;
+}
+
+.link:hover {
+    color: #f05d5e;
+    text-shadow: 0 0 15px rgba(240, 93, 94, 0.7);
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+        filter: brightness(1);
+    }
+    50% {
+        transform: scale(1.02);
+        filter: brightness(1.2);
+    }
+}

@@ -1,0 +1,178 @@
+.about {
+    position: relative;
+
+    height: 100vh;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    scroll-snap-align: start;
+}
+
+/* затемнение фона под карточкой */
+.about::before {
+    content: '';
+
+    position: absolute;
+    inset: 0;
+
+    background:
+            radial-gradient(
+                    circle at center,
+                    rgba(0, 0, 0, 0.05),
+                    rgba(0, 0, 0, 0.55)
+            );
+
+    pointer-events: none;
+}
+
+.card {
+    position: relative;
+
+    width: min(1100px, 90vw);
+
+    display: grid;
+    grid-template-columns: 320px 1fr;
+
+    gap: 48px;
+
+    z-index: 2;
+}
+
+/* внешняя рамка */
+.card::before {
+    content: '';
+
+    position: absolute;
+    inset: -16px;
+
+    border: 1px solid rgba(209, 210, 249, 0.08);
+
+    pointer-events: none;
+}
+
+/* блок фото */
+.photo {
+    aspect-ratio: 1;
+
+    background: rgba(10, 10, 12, 0.7);
+
+    border: 1px solid rgba(209, 210, 249, 0.12);
+
+    backdrop-filter: blur(12px);
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    color: #cdc6a5;
+
+    overflow: hidden;
+}
+
+/* терминал */
+.terminal {
+    background: rgba(12, 12, 16, 0.78);
+
+    border: 1px solid rgba(209, 210, 249, 0.12);
+
+    backdrop-filter: blur(12px);
+
+    overflow: hidden;
+
+    box-shadow:
+            0 0 40px rgba(0, 0, 0, 0.35);
+}
+
+/* верхняя панель */
+.titleBar {
+    height: 42px;
+
+    display: flex;
+    align-items: center;
+
+    gap: 8px;
+
+    padding: 0 16px;
+
+    border-bottom: 1px solid rgba(209, 210, 249, 0.08);
+
+    background: rgba(255, 255, 255, 0.02);
+}
+
+/* точки окна */
+.dot {
+    width: 10px;
+    height: 10px;
+
+    border-radius: 50%;
+}
+
+.dotCore {
+    background: #c33149;
+}
+
+.dotWave {
+    background: #d1d2f9;
+}
+
+.dotGlitch {
+    background: #f05d5e;
+}
+
+/* тело терминала */
+.content {
+    padding: 28px;
+
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    line-height: 1.9;
+}
+
+/* команды */
+.command {
+    color: #f05d5e;
+}
+
+/* имя */
+.name {
+    color: #d1d2f9;
+    font-weight: 600;
+}
+
+/* обычный текст */
+.text {
+    color: #cdc6a5;
+}
+
+/* акценты */
+.highlight {
+    color: #c33149;
+}
+
+/* курсор */
+.cursor {
+    color: #d1d2f9;
+
+    animation: blink 1s infinite;
+}
+
+@keyframes blink {
+    50% {
+        opacity: 0;
+    }
+}
+.glitch {
+    position: relative;
+    animation: shift 0.2s infinite alternate;
+    filter: contrast(1.2) saturate(1.5);
+}
+
+@keyframes shift {
+    0% { transform: translate(0px, 0); }
+    25% { transform: translate(-2px, 1px); }
+    50% { transform: translate(2px, -1px); }
+    75% { transform: translate(-1px, 2px); }
+    100% { transform: translate(1px, -2px); }
+}

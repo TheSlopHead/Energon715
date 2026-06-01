@@ -1,0 +1,84 @@
+.landing {
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    pointer-events: none; /* чтобы клики проходили к спирали */
+    overflow: hidden; /* чтобы частицы не выходили за экран */
+}
+
+/* Canvas с частицами (над текстом, но под pointer-events) */
+.particleCanvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 10;
+    transition: opacity 0.5s;
+}
+
+/* 🌌 центральное ядро */
+.core {
+    text-align: center;
+    font-family: 'JetBrains Mono', monospace;
+    color: #f0f2ff; /* более яркий бело-голубой */
+    z-index: 5;
+    text-shadow:
+            0 0 15px rgba(209, 210, 249, 0.8),
+            0 0 35px rgba(195, 49, 73, 0.5),
+            0 0 60px rgba(209, 210, 249, 0.3);
+    mix-blend-mode: screen;
+    animation: pulse 3s ease-in-out infinite;
+    transition: opacity 0.2s, transform 0.2s, filter 0.2s;
+}
+
+/* название */
+.title {
+    font-size: 36px;       /* стало крупнее */
+    letter-spacing: 5px;
+    color: #ffffff;
+    text-shadow:
+            0 0 20px rgba(255, 255, 255, 0.9),
+            0 0 45px rgba(240, 93, 94, 0.7);
+}
+
+/* подписи */
+.subtitle {
+    margin-top: 10px;
+    font-size: 16px;
+    opacity: 0.85;
+    letter-spacing: 2px;
+    color: #e0e2ff;
+    text-shadow:
+            0 0 10px rgba(209, 210, 249, 0.6),
+            0 0 25px rgba(195, 49, 73, 0.3);
+}
+
+/* "enter prompt" */
+.enter {
+    margin-top: 24px;
+    font-size: 13px;
+    letter-spacing: 3px;
+    color: rgba(240, 93, 94, 0.9);
+    animation: blink 1.2s infinite;
+    text-shadow:
+            0 0 8px rgba(240, 93, 94, 0.7);
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+        filter: brightness(1);
+    }
+    50% {
+        transform: scale(1.03);
+        filter: brightness(1.3);
+    }
+}
+
+@keyframes blink {
+    50% { opacity: 0; }
+}
