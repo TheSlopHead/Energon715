@@ -118,9 +118,9 @@ export default function SpiralCanvas({ onNodesReady, scrollProgress, isMobile }:
         if (!ctx) return
 
         // Параметры для мобильных
-        const POINTS_PER_ARM = isMobile ? 80 : 320
+        const POINTS_PER_ARM = isMobile ? 160 : 320
         const MAX_THICK = isMobile ? 6 : 12
-        const VOID_AMT = isMobile ? 0.5 : 0.35
+        const VOID_AMT = isMobile ? 0.17 : 0.35
         const ORGANIC_K = isMobile ? 0.3 : 0.6
         const USE_GLOW = !isMobile
         const USE_GLITCH = !isMobile
