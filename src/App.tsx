@@ -7,6 +7,7 @@ import Landing from "./components/Landing";
 import About from './components/About'
 import Stack from "./components/Stack";
 import Contact from './components/Contact'
+import { useIsMobile } from './hooks/useIsMobile'
 interface Node {
     id: string
     x: number
@@ -17,6 +18,7 @@ function App() {
     const [nodes, setNodes] = useState<Node[]>([])
     const [mouse, setMouse] = useState({ x: 0, y: 0 })
     const scrollProgress = useScrollProgress()
+    const isMobile = useIsMobile()
 
     useEffect(() => {
         const handler = (e: MouseEvent) => setMouse({ x: e.clientX, y: e.clientY })
@@ -29,7 +31,7 @@ function App() {
 
             {/* canvas — фиксированный фон на весь скролл */}
             <div style={{ position: 'fixed', inset: 0, zIndex: 0 }}>
-                <SpiralCanvas onNodesReady={setNodes} scrollProgress={scrollProgress} />
+                <SpiralCanvas onNodesReady={setNodes} scrollProgress={scrollProgress} isMobile={isMobile} />
                 <SocialNodes nodes={nodes} mouse={mouse} />
             </div>
 
