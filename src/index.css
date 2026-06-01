@@ -6,5 +6,24 @@
 
 body {
   background: #373737;
-  overflow: hidden;
+  overflow-y: auto;
+}
+html {
+  scroll-behavior: smooth;
+}
+.sections {
+  scroll-snap-type: y mandatory;
+}
+
+.page {
+  height: 100vh;
+
+  scroll-snap-align: start;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  color: white;
+  font-size: 48px;
 }
