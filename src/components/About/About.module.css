@@ -176,3 +176,32 @@
     75% { transform: translate(-1px, 2px); }
     100% { transform: translate(1px, -2px); }
 }
+
+@media (max-width: 768px) {
+    .about {
+        padding: 20px;
+        align-items: flex-start;
+    }
+
+    .card {
+        grid-template-columns: 1fr;       /* одна колонка */
+        gap: 24px;
+        width: 100%;
+    }
+
+    .photo {
+        display: none;                    /* убираем фото полностью */
+        /* Если хочешь оставить фото над текстом, замени на:
+           display: block;
+           order: -1;                   */
+    }
+
+    .terminal {
+        order: 1;
+    }
+
+    .content {
+        padding: 20px;
+        font-size: 14px;
+    }
+}

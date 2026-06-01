@@ -82,3 +82,8 @@
 @keyframes blink {
     50% { opacity: 0; }
 }
+@media (max-width: 768px) {
+    .landing {
+        pointer-events: auto;   /* чтобы скролл не игнорировался */
+    }
+}
