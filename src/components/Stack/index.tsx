@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
 import styles from './Stack.module.css'
+import { useIsMobile } from '../../hooks/useIsMobile'
 
 const skills = [
     'C', 'C++', 'Go', 'SQL',
@@ -16,12 +17,33 @@ const colors = [
 const RADIUS = 130
 
 export default function Stack() {
+    const isMobile = useIsMobile()
     const [angle, setAngle] = useState(0)
+    const [visible, setVisible] = useState(false)
+    const sectionRef = useRef<HTMLElement>(null)
     const rafRef = useRef<number>(0)
 
+    // Отслеживаем видимость секции
     useEffect(() => {
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                if (entry.isIntersecting) {
+                    setVisible(true)
+                    observer.disconnect()
+                }
+            },
+            { threshold: 0.3 }
+        )
+        if (sectionRef.current) observer.observe(sectionRef.current)
+        return () => observer.disconnect()
+    }, [])
+
+    // Вращение только на десктопе
+    useEffect(() => {
+        if (isMobile) return   // на мобильных не крутим
+
         let lastTime = performance.now()
-        const speed = 0.3 // радиан в секунду (примерно 1 оборот за ~21 сек)
+        const speed = 0.3
 
         const animate = (time: number) => {
             const delta = (time - lastTime) / 1000
@@ -32,10 +54,10 @@ export default function Stack() {
 
         rafRef.current = requestAnimationFrame(animate)
         return () => cancelAnimationFrame(rafRef.current)
-    }, [])
+    }, [isMobile])
 
     return (
-        <section className={styles.stack}>
+        <section ref={sectionRef} className={styles.stack}>
             <div className={styles.overlay} />
 
             <div className={styles.terminal}>
@@ -55,12 +77,13 @@ export default function Stack() {
                         return (
                             <div
                                 key={skill}
-                                className={styles.skill}
+                                className={`${styles.skill} ${visible ? styles.visible : ''}`}
                                 style={{
                                     transform: `translate(${x}px, ${y}px)`,
                                     borderColor: colors[i],
-                                    boxShadow: `0 0 8px ${colors[i]}40`,
-                                }}
+                                    '--glow-color': colors[i] + '80',     // ← добавили
+                                    transitionDelay: `${i * 0.05}s`,      // ← добавили
+                                } as React.CSSProperties}
                             >
                                 {skill}
                             </div>
