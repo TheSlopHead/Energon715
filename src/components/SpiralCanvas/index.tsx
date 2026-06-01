@@ -3,6 +3,7 @@ import { links } from '../../data/links'
 
 interface Props {
     onNodesReady: (nodes: { id: string; x: number; y: number }[]) => void
+    scrollProgress: number
 }
 
 // Два рукава галактики = два набора точек со сдвигом π
@@ -108,8 +109,13 @@ function waveColor(_frac: number, _pi: number, layerT: number, t: number, flowBr
     return `hsl(${h | 0},${s | 0}%,${Math.min(95, l) | 0}%)`
 }
 
-export default function SpiralCanvas({ onNodesReady }: Props) {
+export default function SpiralCanvas({ onNodesReady, scrollProgress }: Props) {
     const canvasRef = useRef<HTMLCanvasElement>(null)
+    const scrollRef = useRef(0)
+
+    useEffect(() => {
+        scrollRef.current = scrollProgress
+    }, [scrollProgress])
 
     useEffect(() => {
         const canvas = canvasRef.current
@@ -138,10 +144,12 @@ export default function SpiralCanvas({ onNodesReady }: Props) {
             return { sx: cx + x * sc, sy: cy + y * sc }
         }
 
-        let nodesReady = false
-
+        // Обновление позиций кнопок с учётом текущего скролла
         function computeAndSendNodes() {
-            const sc = Math.min(canvas.width, canvas.height) * 1.2
+            const sp = scrollRef.current
+            const scaleBoost = 1 + sp * 2.2
+            // Такой же масштаб, как в отрисовке спирали
+            const sc = Math.min(canvas.width, canvas.height) * 1.4 * scaleBoost
             const cx = canvas.width / 2
             const cy = canvas.height / 2
 
@@ -164,6 +172,7 @@ export default function SpiralCanvas({ onNodesReady }: Props) {
         let glitchActive = false
         let glitchBlocks: { x: number; y: number; w: number; h: number; dx: number; col: string }[] = []
         let rafId: number
+        let lastSp: number | null = null // Для отслеживания изменения скролла
 
         function triggerGlitch() {
             glitchActive = true
@@ -180,21 +189,34 @@ export default function SpiralCanvas({ onNodesReady }: Props) {
 
         function frame() {
             t += 0.001
-            if (!nodesReady) {
+            const sp = scrollRef.current
+            if (Math.random() < 0.01) {
+                console.log(scrollRef.current)
+            }
+            // Первый запуск или значительное изменение скролла → обновляем позиции кнопок
+            if (lastSp === null || Math.abs(sp - lastSp) > 0.001) {
                 computeAndSendNodes()
-                nodesReady = true
+                lastSp = sp
             }
 
             const maxThick = 12
             const voidAmt = 0.35
             const organicK = 0.6
-            const sc = Math.min(canvas.width, canvas.height) * 1.2
+            const scaleBoost = 1 + sp * 2.2
+            const sc = Math.min(canvas.width, canvas.height) * 1.4 * scaleBoost
             const cx = canvas.width / 2
             const cy = canvas.height / 2
 
+            // Мягкое затухание: при sp=1 остаётся 20% видимости
+            const globalAlphaScale = 0.2 + (1 - sp) * 0.8
+            const fadeScale = 1 - sp * 0.6
             ctx.fillStyle = '#060608'
             ctx.fillRect(0, 0, canvas.width, canvas.height)
             glowCtx.clearRect(0, 0, glow.width, glow.height)
+
+            // Если почти ничего не видно, всё равно продолжаем анимацию (можно закомментировать,
+            // чтобы не нагружать процессор, но для плавности оставим)
+            // if (globalAlphaScale <= 0.02) { rafId = requestAnimationFrame(frame); return; }
 
             pointSets.forEach((pts, pi) => {
                 const prof = profiles[pi]
@@ -247,15 +269,23 @@ export default function SpiralCanvas({ onNodesReady }: Props) {
                             sc, cx, cy
                         )
 
-                        const fsz = (4 + frac * 2 + thick * 0.6) * sc * 0.003
+                        const fsz =
+                            (4 + frac * 2 + thick * 0.6) *
+                            sc *
+                            0.003 *
+                            fadeScale
 
-                        ctx.globalAlpha = 0.25 + fill * 0.75
+                        ctx.globalAlpha = (0.25 + fill * 0.75) * globalAlphaScale
                         ctx.fillStyle = waveColor(frac, pi, 1 - edgeDist, t, flowBright)
                         ctx.font = `${fsz.toFixed(1)}px monospace`
                         ctx.fillText(ch, sx + micro, sy + micro)
 
                         if (isFlowHead && layer === Math.floor(localThick / 2)) {
-                            glowCtx.globalAlpha = flowBright * 0.9
+                            glowCtx.globalAlpha =
+                                flowBright *
+                                0.9 *
+                                globalAlphaScale *
+                                (1 - sp)
                             glowCtx.fillStyle = waveColor(frac, pi, 1, t, flowBright)
                             glowCtx.font = `${(fsz * 1.4).toFixed(1)}px monospace`
                             glowCtx.fillText(ch, sx, sy)
@@ -312,5 +342,15 @@ export default function SpiralCanvas({ onNodesReady }: Props) {
         }
     }, [])
 
-    return <canvas ref={canvasRef} style={{ display: 'block' }} />
+    return (
+        <canvas
+            ref={canvasRef}
+            style={{
+                display: 'block',
+                width: '100%',
+                height: '100%',
+                pointerEvents: 'none',
+            }}
+        />
+    )
 }
