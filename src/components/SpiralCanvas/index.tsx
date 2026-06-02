@@ -192,11 +192,15 @@ export default function SpiralCanvas({ onNodesReady, scrollProgress, isMobile }:
             }))
             setTimeout(() => { glitchActive = false }, 500 + Math.random() * 300)
         }
-
+        let frameCount = 0
         function frame() {
             t += 0.001
             const sp = scrollRef.current
-
+            frameCount++
+            if (isMobile && frameCount % 2 !== 0) {
+                rafId = requestAnimationFrame(frame)
+                return
+            }
             // На мобильных обновляем узлы реже (каждые ~100 мс)
             if (!isMobile && (lastSp === null || Math.abs(sp - lastSp) > 0.001)) {
                 computeAndSendNodes()

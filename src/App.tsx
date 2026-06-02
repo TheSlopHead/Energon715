@@ -3,11 +3,12 @@ import SpiralCanvas from './components/SpiralCanvas'
 import SocialNodes from './components/SocialNodes'
 import TerminalBar from './components/TerminalBar'
 import { useScrollProgress } from './hooks/useScrollProgress'
-import Landing from "./components/Landing";
+import Landing from "./components/Landing"
 import About from './components/About'
-import Stack from "./components/Stack";
+import Stack from "./components/Stack"
 import Contact from './components/Contact'
 import { useIsMobile } from './hooks/useIsMobile'
+
 interface Node {
     id: string
     x: number
@@ -25,32 +26,37 @@ function App() {
         window.addEventListener('mousemove', handler)
         return () => window.removeEventListener('mousemove', handler)
     }, [])
-    console.log('scrollProgress:', scrollProgress)
+
     return (
         <div style={{ height: '400vh' }}>
 
-            {/* canvas — фиксированный фон на весь скролл */}
+            {/* слой 0 — спираль */}
             <div style={{ position: 'fixed', inset: 0, zIndex: 0 }}>
-                <SpiralCanvas onNodesReady={setNodes} scrollProgress={scrollProgress} isMobile={isMobile} />
-                <SocialNodes nodes={nodes} mouse={mouse} />
+                <SpiralCanvas
+                    onNodesReady={setNodes}
+                    scrollProgress={scrollProgress}
+                    isMobile={isMobile}
+                />
             </div>
 
-            {/* секции поверх */}
-            <div style={{ position: 'relative', zIndex: 1 }}>
+            {/* слой 1 — секции */}
+            <div style={{ position: 'relative', zIndex: 1, pointerEvents: 'none' }}>
+                <Landing scrollProgress={scrollProgress} />
+                <About />
+                <Stack />
+                <Contact />
+            </div>
 
-                {/* Экран 1 — Landing, высота 100vh */}
-                <div className="sections">
-                    <Landing scrollProgress={scrollProgress} />
-                    <About />
-
-                    <Stack />
-
-                    <Contact />
+            {/* слой 2 — ссылки на спирали, поверх всего */}
+            {!isMobile && (
+                <div style={{ position: 'fixed', inset: 0, zIndex: 2, pointerEvents: 'none' }}>
+                    <SocialNodes nodes={nodes} mouse={mouse} />
                 </div>
+            )}
 
-            </div>
-
+            {/* слой 3 — нижняя панель */}
             <TerminalBar />
+
         </div>
     )
 }

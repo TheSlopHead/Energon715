@@ -4,8 +4,8 @@
     justify-content: center;
     align-items: center;
     position: relative;
-    pointer-events: none; /* чтобы клики проходили к спирали */
-    overflow: hidden; /* чтобы частицы не выходили за экран */
+    overflow: hidden;
+    pointer-events: none;
 }
 
 /* Canvas с частицами (над текстом, но под pointer-events) */
@@ -33,6 +33,7 @@
     mix-blend-mode: screen;
     animation: pulse 3s ease-in-out infinite;
     transition: opacity 0.2s, transform 0.2s, filter 0.2s;
+    pointer-events: none;
 }
 
 /* название */
